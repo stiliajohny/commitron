@@ -5,6 +5,10 @@ on:
     branches:
       - master # Trigger on merges to master
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   tag-and-release:
     name: Tag and Release
@@ -17,6 +21,7 @@ jobs:
         with:
           fetch-depth: 0 # Need full history for versioning
           token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
 
       - name: Setup Go
         uses: actions/setup-go@v4
@@ -58,6 +63,7 @@ jobs:
 
           # Create and push the tag
           git tag $TAG_VERSION
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           git push origin $TAG_VERSION
           git push origin HEAD
 
