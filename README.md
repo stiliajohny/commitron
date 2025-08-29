@@ -342,6 +342,52 @@ See the [open issues](https://github.com/stiliajohny/commitron/issues) for a lis
 
 ---
 
+<!-- RELEASE PROCESS -->
+
+## Release Process
+
+### For New Versions
+
+When you create a new release, the Homebrew formula is automatically updated via GitHub Actions. However, you can also update it manually:
+
+#### Automatic Update (Recommended)
+1. Create a new release on GitHub with a tag (e.g., `v0.2.0`)
+2. The GitHub Action will automatically:
+   - Download the release tarball
+   - Calculate the SHA256 checksum
+   - Update the Homebrew formula
+   - Commit and push the changes
+
+#### Manual Update
+If you need to update the formula manually, use the provided script:
+
+```bash
+# Make the script executable (first time only)
+chmod +x scripts/update-homebrew-formula.sh
+
+# Update formula for a new version
+./scripts/update-homebrew-formula.sh v0.2.0
+
+# Review changes and commit
+git add Formula/commitron.rb
+git commit -m "feat: update Homebrew formula for v0.2.0"
+git push origin master
+```
+
+### What Gets Updated
+- **URL**: Points to the new release tarball
+- **SHA256**: Updated checksum for the new release
+- **Comment**: Updated to reflect the new version
+
+### Verification
+After updating, users can install the new version with:
+```bash
+brew tap stiliajohny/commitron https://github.com/stiliajohny/commitron.git
+brew install commitron
+```
+
+---
+
 <!-- CONTRIBUTING -->
 
 ## Contributing
