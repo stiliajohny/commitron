@@ -35,7 +35,7 @@ jobs:
           # Get the latest tag or start with 0.1.0
           LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
           CURRENT_VERSION=$(echo $LATEST_TAG | sed 's/v//')
-          
+
           # Split the version into components
           IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
 
@@ -93,12 +93,8 @@ jobs:
           VERSION="${{ needs.tag-and-release.outputs.new_version }}"
           COMMIT_SHA="${{ github.sha }}"
           BUILD_DATE="$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-
-          go build -v \
-            -ldflags "-X github.com/johnstilia/commitron/pkg/version.Version=$VERSION \
-                      -X github.com/johnstilia/commitron/pkg/version.CommitSHA=$COMMIT_SHA \
-                      -X github.com/johnstilia/commitron/pkg/version.BuildDate='$BUILD_DATE'" \
-            -o ${{ matrix.artifact_name }} ./cmd/commitron
+          
+          go build -v -ldflags "-X github.com/johnstilia/commitron/pkg/version.Version=$VERSION -X github.com/johnstilia/commitron/pkg/version.CommitSHA=$COMMIT_SHA -X github.com/johnstilia/commitron/pkg/version.BuildDate='$BUILD_DATE'" -o ${{ matrix.artifact_name }} ./cmd/commitron
 
       # Upload the binary as an artifact for this workflow run
       - name: Upload artifact
