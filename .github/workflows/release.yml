@@ -133,6 +133,14 @@ jobs:
           echo "Artifacts directory contents:"
           ls -la ./artifacts/
 
+      # Copy artifacts to release directory with proper names
+      - name: Prepare release files
+        run: |
+          mkdir -p ./release
+          find ./artifacts -type f -name "commitron*" -exec cp {} ./release/ \;
+          echo "Release files:"
+          ls -la ./release/
+
       # Create a new GitHub release with the tag that triggered the workflow
       - name: Create Release
         id: create_release
@@ -140,10 +148,7 @@ jobs:
         with:
           tag_name: v${{ needs.tag-and-release.outputs.new_version }}
           name: Release v${{ needs.tag-and-release.outputs.new_version }}
-          files: |
-            ./artifacts/commitron-linux-amd64/commitron
-            ./artifacts/commitron-windows-amd64.exe/commitron.exe
-            ./artifacts/commitron-macos-amd64/commitron
+          files: ./release/*
           draft: false
           prerelease: false
         env:
