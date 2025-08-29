@@ -52,7 +52,7 @@ jobs:
           rm -rf "$TEMP_DIR"
 
           echo "✅ Homebrew formula updated successfully!"
-          
+
           # Verify the formula is correct
           echo "🔍 Verifying formula..."
           echo "URL: $(grep 'url ' $FORMULA_FILE)"
