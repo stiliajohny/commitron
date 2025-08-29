@@ -32,12 +32,10 @@ jobs:
       - name: Create Tag
         id: create_tag
         run: |
-          # Extract current version from version command
-          CURRENT_VERSION=$(grep -o 'commitron v[0-9]\+\.[0-9]\+\.[0-9]\+' cmd/commitron/commands.go | head -1 | sed 's/commitron v//')
-          if [ -z "$CURRENT_VERSION" ]; then
-            CURRENT_VERSION="0.1.0"  # Default if no version found
-          fi
-
+          # Get the latest tag or start with 0.1.0
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
+          CURRENT_VERSION=$(echo $LATEST_TAG | sed 's/v//')
+          
           # Split the version into components
           IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
 
@@ -54,18 +52,10 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Update version in code
-          awk -v new_version="$NEW_VERSION" '{gsub(/commitron v[0-9]+\.[0-9]+\.[0-9]+/, "commitron v" new_version); print}' cmd/commitron/commands.go > cmd/commitron/commands.go.tmp && mv cmd/commitron/commands.go.tmp cmd/commitron/commands.go
-
-          # Commit the version change
-          git add cmd/commitron/commands.go
-          git commit -m "Bump version to $NEW_VERSION [skip ci]"
-
-          # Create and push the tag
+          # Create and push the tag (no need to update source code since version is injected at build time)
           git tag $TAG_VERSION
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           git push origin $TAG_VERSION
-          git push origin HEAD
 
           echo "Created and pushed tag $TAG_VERSION"
 
@@ -103,7 +93,7 @@ jobs:
           VERSION="${{ needs.tag-and-release.outputs.new_version }}"
           COMMIT_SHA="${{ github.sha }}"
           BUILD_DATE="$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-          
+
           go build -v \
             -ldflags "-X github.com/johnstilia/commitron/pkg/version.Version=$VERSION \
                       -X github.com/johnstilia/commitron/pkg/version.CommitSHA=$COMMIT_SHA \
