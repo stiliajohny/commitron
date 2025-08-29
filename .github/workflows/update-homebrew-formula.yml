@@ -4,6 +4,9 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: write
+
 jobs:
   update-formula:
     runs-on: ubuntu-latest
@@ -49,11 +52,17 @@ jobs:
           rm -rf "$TEMP_DIR"
 
           echo "✅ Homebrew formula updated successfully!"
+          
+          # Verify the formula is correct
+          echo "🔍 Verifying formula..."
+          echo "URL: $(grep 'url ' $FORMULA_FILE)"
+          echo "SHA256: $(grep 'sha256 ' $FORMULA_FILE)"
 
       - name: Commit and push changes
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           git add Formula/commitron.rb
           git commit -m "feat: update Homebrew formula for ${{ github.event.release.tag_name }}"
-          git push
+          git push origin HEAD
