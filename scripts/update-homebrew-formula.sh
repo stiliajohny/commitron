@@ -43,10 +43,10 @@ cp "$FORMULA_FILE" "$FORMULA_FILE.backup"
 # Update the formula file
 echo "📝 Updating formula file..."
 sed -i.bak \
-    -e "s|url \".*\"|url \"https://github.com/stiliajohny/commitron/archive/refs/tags/$VERSION.tar.gz\"|" \
-    -e "s|sha256 \".*\"|sha256 \"$SHA256_CHECKSUM\"|" \
-    -e "s|# SHA256 checksum for .*|# SHA256 checksum for $VERSION release|" \
-    "$FORMULA_FILE"
+-e "s|url \".*\"|url \"https://github.com/stiliajohny/commitron/archive/refs/tags/$VERSION.tar.gz\"|" \
+-e "s|sha256 \".*\"|sha256 \"$SHA256_CHECKSUM\"|" \
+-e "s|# SHA256 checksum for .*|# SHA256 checksum for $VERSION release|" \
+"$FORMULA_FILE"
 
 # Remove backup file created by sed
 rm -f "$FORMULA_FILE.bak"

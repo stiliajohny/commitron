@@ -7,53 +7,53 @@ on:
 jobs:
   update-formula:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      
-    - name: Update Homebrew formula
-      run: |
-        VERSION="${{ github.event.release.tag_name }}"
-        FORMULA_FILE="Formula/commitron.rb"
-        TEMP_DIR="/tmp/commitron-update"
-        
-        echo "🔄 Updating Homebrew formula for version: $VERSION"
-        
-        # Create temporary directory
-        mkdir -p "$TEMP_DIR"
-        cd "$TEMP_DIR"
-        
-        # Download the release tarball
-        echo "📥 Downloading release tarball..."
-        curl -L "https://github.com/stiliajohny/commitron/archive/refs/tags/$VERSION.tar.gz" -o "commitron-$VERSION.tar.gz"
-        
-        # Calculate SHA256 checksum
-        echo "🔍 Calculating SHA256 checksum..."
-        SHA256_CHECKSUM=$(shasum -a 256 "commitron-$VERSION.tar.gz" | cut -d' ' -f1)
-        
-        echo "✅ SHA256 checksum: $SHA256_CHECKSUM"
-        
-        # Go back to project root
-        cd - > /dev/null
-        
-        # Update the formula file
-        echo "📝 Updating formula file..."
-        sed -i \
-            -e "s|url \".*\"|url \"https://github.com/stiliajohny/commitron/archive/refs/tags/$VERSION.tar.gz\"|" \
-            -e "s|sha256 \".*\"|sha256 \"$SHA256_CHECKSUM\"|" \
-            -e "s|# SHA256 checksum for .*|# SHA256 checksum for $VERSION release|" \
-            "$FORMULA_FILE"
-        
-        # Clean up temporary files
-        rm -rf "$TEMP_DIR"
-        
-        echo "✅ Homebrew formula updated successfully!"
-        
-    - name: Commit and push changes
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add Formula/commitron.rb
-        git commit -m "feat: update Homebrew formula for ${{ github.event.release.tag_name }}"
-        git push
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Update Homebrew formula
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          FORMULA_FILE="Formula/commitron.rb"
+          TEMP_DIR="/tmp/commitron-update"
+
+          echo "🔄 Updating Homebrew formula for version: $VERSION"
+
+          # Create temporary directory
+          mkdir -p "$TEMP_DIR"
+          cd "$TEMP_DIR"
+
+          # Download the release tarball
+          echo "📥 Downloading release tarball..."
+          curl -L "https://github.com/stiliajohny/commitron/archive/refs/tags/$VERSION.tar.gz" -o "commitron-$VERSION.tar.gz"
+
+          # Calculate SHA256 checksum
+          echo "🔍 Calculating SHA256 checksum..."
+          SHA256_CHECKSUM=$(shasum -a 256 "commitron-$VERSION.tar.gz" | cut -d' ' -f1)
+
+          echo "✅ SHA256 checksum: $SHA256_CHECKSUM"
+
+          # Go back to project root
+          cd - > /dev/null
+
+          # Update the formula file
+          echo "📝 Updating formula file..."
+          sed -i \
+              -e "s|url \".*\"|url \"https://github.com/stiliajohny/commitron/archive/refs/tags/$VERSION.tar.gz\"|" \
+              -e "s|sha256 \".*\"|sha256 \"$SHA256_CHECKSUM\"|" \
+              -e "s|# SHA256 checksum for .*|# SHA256 checksum for $VERSION release|" \
+              "$FORMULA_FILE"
+
+          # Clean up temporary files
+          rm -rf "$TEMP_DIR"
+
+          echo "✅ Homebrew formula updated successfully!"
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add Formula/commitron.rb
+          git commit -m "feat: update Homebrew formula for ${{ github.event.release.tag_name }}"
+          git push
