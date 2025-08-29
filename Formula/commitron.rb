@@ -1,9 +1,9 @@
 class Commitron < Formula
   desc "AI-driven CLI tool that generates optimal, context-aware commit messages"
   homepage "https://github.com/stiliajohny/commitron"
-  url "https://github.com/stiliajohny/commitron/archive/refs/tags/v0.1.0.tar.gz"
-  # SHA256 checksum for v0.1.0 release
-  sha256 "c4ee5df458c875d8ef37768159d69e6e06c50f535cc1b77ba1f946c71e784f9f"
+  url "https://github.com/stiliajohny/commitron/archive/refs/tags/v0.1.4.tar.gz"
+  # SHA256 checksum for v0.1.4 release
+  sha256 "41199a4e1d2003036aa1a6116df7da9f0ab015858570e07a4dcaf24056041583"
 
   depends_on "go" => :build
 
