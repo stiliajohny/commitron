@@ -13,9 +13,10 @@ jobs:
       new_version: ${{ steps.create_tag.outputs.new_version }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Need full history for versioning
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Go
         uses: actions/setup-go@v4
@@ -45,8 +46,8 @@ jobs:
           echo "tag_version=$TAG_VERSION" >> $GITHUB_OUTPUT
 
           # Create and push tag
-          git config --global user.name "GitHub Actions Bot"
-          git config --global user.email "actions@github.com"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           # Update version in code
           awk -v new_version="$NEW_VERSION" '{gsub(/commitron v[0-9]+\.[0-9]+\.[0-9]+/, "commitron v" new_version); print}' cmd/commitron/commands.go > cmd/commitron/commands.go.tmp && mv cmd/commitron/commands.go.tmp cmd/commitron/commands.go
@@ -58,7 +59,7 @@ jobs:
           # Create and push the tag
           git tag $TAG_VERSION
           git push origin $TAG_VERSION
-          git push
+          git push origin HEAD
 
           echo "Created and pushed tag $TAG_VERSION"
 
@@ -81,7 +82,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: v${{ needs.tag-and-release.outputs.new_version }}
 
@@ -97,7 +98,7 @@ jobs:
 
       # Upload the binary as an artifact for this workflow run
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset_name }}
           path: ${{ matrix.artifact_name }}
@@ -108,13 +109,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: v${{ needs.tag-and-release.outputs.new_version }}
 
       # Download all artifacts from the build job
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: ./artifacts
 
