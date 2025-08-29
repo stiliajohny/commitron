@@ -8,6 +8,7 @@ import (
 	"github.com/johnstilia/commitron/pkg/ai"
 	"github.com/johnstilia/commitron/pkg/config"
 	"github.com/johnstilia/commitron/pkg/git"
+	"github.com/johnstilia/commitron/pkg/version"
 	"github.com/spf13/cobra"
 )
 
@@ -121,9 +122,13 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Show the version information",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("\n\033[1;36mcommitron v0.1.6\033[0m")
+		fmt.Printf("\n\033[1;36mcommitron %s\033[0m\n", version.GetVersion())
 		fmt.Println("\n  \033[38;5;252m🤖 AI-powered commit message generator\033[0m")
 		fmt.Println("\n  \033[38;5;244mBuilt with ❤️ using Go\033[0m")
+		if !version.IsDev() {
+			fmt.Printf("\n  \033[38;5;244mCommit: %s\033[0m\n", version.CommitSHA)
+			fmt.Printf("  \033[38;5;244mBuilt: %s\033[0m\n", version.BuildDate)
+		}
 	},
 }
 

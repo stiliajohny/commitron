@@ -8,7 +8,14 @@ class Commitron < Formula
   depends_on "go" => :build
 
   def install
-    system "go", "build", "-o", bin/"commitron", "./cmd/commitron"
+    # Extract version from the URL
+    version = url.match(/v(\d+\.\d+\.\d+)/)[1]
+    commit_sha = `git rev-parse HEAD`.strip
+    build_date = Time.now.utc.strftime("%Y-%m-%d %H:%M:%S UTC")
+    
+    system "go", "build", 
+           "-ldflags", "-X github.com/johnstilia/commitron/pkg/version.Version=#{version} -X github.com/johnstilia/commitron/pkg/version.CommitSHA=#{commit_sha} -X github.com/johnstilia/commitron/pkg/version.BuildDate='#{build_date}'",
+           "-o", bin/"commitron", "./cmd/commitron"
   end
 
   test do

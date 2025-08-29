@@ -100,7 +100,15 @@ jobs:
       # Build the application for the current OS/architecture
       - name: Build
         run: |
-          go build -v -o ${{ matrix.artifact_name }} ./cmd/commitron
+          VERSION="${{ needs.tag-and-release.outputs.new_version }}"
+          COMMIT_SHA="${{ github.sha }}"
+          BUILD_DATE="$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          
+          go build -v \
+            -ldflags "-X github.com/johnstilia/commitron/pkg/version.Version=$VERSION \
+                      -X github.com/johnstilia/commitron/pkg/version.CommitSHA=$COMMIT_SHA \
+                      -X github.com/johnstilia/commitron/pkg/version.BuildDate='$BUILD_DATE'" \
+            -o ${{ matrix.artifact_name }} ./cmd/commitron
 
       # Upload the binary as an artifact for this workflow run
       - name: Upload artifact
