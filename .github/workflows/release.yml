@@ -100,7 +100,7 @@ jobs:
       # Build the application for the current OS/architecture
       - name: Build
         run: |
-          go build -v -o ${{ matrix.artifact_name }}
+          go build -v -o ${{ matrix.artifact_name }} ./cmd/commitron
 
       # Upload the binary as an artifact for this workflow run
       - name: Upload artifact
