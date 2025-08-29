@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -31,6 +32,8 @@ const (
 	Ollama AIProvider = "ollama"
 	// Anthropic (Claude) provider
 	Claude AIProvider = "claude"
+	// Custom web API provider (e.g., Open WebUI, local GPT instances)
+	Custom AIProvider = "custom"
 )
 
 // Config represents the application configuration
@@ -41,6 +44,7 @@ type Config struct {
 		APIKey       string     `yaml:"api_key"`
 		Model        string     `yaml:"model"`
 		OllamaHost   string     `yaml:"ollama_host,omitempty"`
+		APIEndpoint  string     `yaml:"api_endpoint"` // Custom API endpoint URL
 		Temperature  float64    `yaml:"temperature"`
 		SystemPrompt string     `yaml:"system_prompt"`
 		Debug        bool       `yaml:"debug,omitempty"`      // When true, prints debug info about AI requests
@@ -166,6 +170,8 @@ func SaveExampleConfig(path string) error {
 	cfg.AI.Temperature = 0.7 // Example temperature value
 	cfg.AI.Debug = false     // Set to true to see AI prompts and responses
 	cfg.AI.MaxTokens = 1000  // Maximum response tokens
+	// Example API endpoint for custom provider (empty by default)
+	cfg.AI.APIEndpoint = "# Set this for custom provider (e.g., http://localhost:8080/v1/chat/completions)"
 
 	// Example of a custom system prompt (commented out by default)
 	cfg.AI.SystemPrompt = "# Custom system prompt (uncomment to use)\n# You are an expert developer who writes clear, concise commit messages.\n# Always follow the conventional commits format and be specific."
@@ -195,6 +201,12 @@ func SaveExampleConfig(path string) error {
 # This file configures the behavior of the commitron tool
 
 ` + string(data)
+
+	// Add custom provider documentation
+	yamlWithComments = strings.Replace(yamlWithComments,
+		"    max_tokens: 1000\ncommit:",
+		"    max_tokens: 1000\n    # Only needed for custom provider - URL of your local GPT API endpoint\n    # Examples:\n    # - Open WebUI: http://localhost:8080/v1/chat/completions\n    # - Local API server: http://localhost:8000/v1/chat/completions\n    # - Custom endpoint: https://your-api.example.com/v1/chat/completions\n    api_endpoint: \"\"\ncommit:",
+		1)
 
 	// Write to file
 	return os.WriteFile(path, []byte(yamlWithComments), 0644)

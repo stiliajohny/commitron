@@ -3,7 +3,7 @@
 
 # AI provider configuration
 ai:
-  # Available providers: openai, gemini, ollama, claude
+  # Available providers: openai, gemini, ollama, claude, custom
   provider: ollama
   # Your API key for the selected provider
   api_key: your-api-key-here
@@ -26,6 +26,12 @@ ai:
   #system_prompt: ""
   # Only needed for Ollama, defaults to http://localhost:11434
   ollama_host: http://localhost:11434
+  # Only needed for custom provider - URL of your local GPT API endpoint
+  # Examples:
+  # - Open WebUI: http://localhost:8080/v1/chat/completions
+  # - Local API server: http://localhost:8000/v1/chat/completions
+  # - Custom endpoint: https://your-api.example.com/v1/chat/completions
+  #api_endpoint: http://localhost:8080/v1/chat/completions
 
 # Commit message configuration
 commit:

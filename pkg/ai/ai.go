@@ -789,7 +789,7 @@ func DisplayCommitMessage(commitMsg string) (bool, error) {
 
 // DisplayAnalysisComplete prints a completion message
 func DisplayAnalysisComplete() {
-	fmt.Println("\033[1;32m✓ Analysis complete\033[0m\n")
+	fmt.Println("\033[1;32m✓ Analysis complete\033[0m")
 }
 
 // GetGitDiff returns a more comprehensive git diff for the staged files
@@ -890,6 +890,8 @@ func GenerateCommitMessage(cfg *config.Config, files []string, changes string) (
 		rawResponse, err = generateWithOllama(cfg, prompt)
 	case config.Claude:
 		rawResponse, err = generateWithClaude(cfg, prompt)
+	case config.Custom:
+		rawResponse, err = generateWithCustomAPI(cfg, prompt)
 	default:
 		return "", fmt.Errorf("unsupported AI provider: %s", cfg.AI.Provider)
 	}
@@ -1799,6 +1801,150 @@ func generateWithClaude(cfg *config.Config, prompt string) (string, error) {
 	}
 
 	content := strings.TrimSpace(response.Content.Text)
+
+	// For conventional commits, validate the response starts with a valid type
+	if cfg.Commit.Convention == config.ConventionalCommits {
+		// Fix if the response starts with a colon instead of a type
+		if strings.HasPrefix(content, ": ") {
+			content = "chore" + content
+			debugPrint(cfg, "FIXED RESPONSE FORMAT", content)
+		}
+	}
+
+	// Return the generated commit message
+	return content, nil
+}
+
+// generateWithCustomAPI uses a custom web API endpoint to generate a commit message
+// This supports various local GPT instances like Open WebUI, local API servers, etc.
+func generateWithCustomAPI(cfg *config.Config, prompt string) (string, error) {
+	// Validate that API endpoint is provided
+	if cfg.AI.APIEndpoint == "" {
+		return "", fmt.Errorf("custom API provider requires api_endpoint to be configured")
+	}
+
+	// Add a length requirement prefix to the prompt
+	lengthPrefix := fmt.Sprintf("CRITICAL INSTRUCTION: Your commit message subject MUST be under %d characters total. ", cfg.Commit.MaxLength)
+	if cfg.Commit.Convention == config.ConventionalCommits {
+		lengthPrefix += fmt.Sprintf("For conventional commits, this means the ENTIRE string 'type(scope): subject' must be under %d characters.", cfg.Commit.MaxLength)
+		lengthPrefix += "\n\nYOU MUST START YOUR RESPONSE WITH A CONVENTIONAL COMMIT TYPE. DO NOT START WITH JUST A COLON."
+		lengthPrefix += "\nCORRECT: 'feat: add new feature'"
+		lengthPrefix += "\nINCORRECT: ': add new feature'"
+		lengthPrefix += "\nValid types are: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+
+		if cfg.Commit.IncludeBody {
+			lengthPrefix += "\n\nYOU MUST INCLUDE A COMMIT BODY AFTER THE SUBJECT. The body must be separated from the subject by a blank line."
+			lengthPrefix += "\nThe body MUST NOT be empty and should explain what changes were made and why."
+		}
+	}
+
+	// Prepend the length requirement to the prompt
+	enhancedPrompt := lengthPrefix + "\n\n" + prompt
+
+	// Define request structure for OpenAI-compatible API
+	type Message struct {
+		Role    string `json:"role"`
+		Content string `json:"content"`
+	}
+
+	type Request struct {
+		Model       string    `json:"model"`
+		Messages    []Message `json:"messages"`
+		Temperature float64   `json:"temperature,omitempty"`
+		MaxTokens   int       `json:"max_tokens,omitempty"`
+		Stream      bool      `json:"stream,omitempty"`
+	}
+
+	type Choice struct {
+		Message struct {
+			Content string `json:"content"`
+		} `json:"message"`
+	}
+
+	type Response struct {
+		Choices []Choice `json:"choices"`
+		Error   struct {
+			Message string `json:"message"`
+		} `json:"error,omitempty"`
+	}
+
+	// Create request
+	reqBody := Request{
+		Model: cfg.AI.Model,
+		Messages: []Message{
+			{
+				Role:    "user",
+				Content: enhancedPrompt,
+			},
+		},
+		Temperature: cfg.AI.Temperature,
+		MaxTokens:   cfg.AI.MaxTokens,
+		Stream:      false,
+	}
+
+	// Debug: Show the request being sent to custom API
+	debugPrint(cfg, "CUSTOM API REQUEST", reqBody)
+
+	reqData, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", err
+	}
+
+	// Debug: Show the API endpoint being used
+	debugPrint(cfg, "CUSTOM API ENDPOINT", cfg.AI.APIEndpoint)
+
+	// Make API request
+	req, err := http.NewRequest("POST", cfg.AI.APIEndpoint, bytes.NewBuffer(reqData))
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	// Add API key if provided
+	if cfg.AI.APIKey != "" {
+		req.Header.Set("Authorization", "Bearer "+cfg.AI.APIKey)
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	// Check response status
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("custom API error (status %d): %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	// Read response
+	respData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	// Debug: Show the raw API response
+	debugPrint(cfg, "CUSTOM API RAW RESPONSE", string(respData))
+
+	var response Response
+	err = json.Unmarshal(respData, &response)
+	if err != nil {
+		return "", fmt.Errorf("error parsing custom API response: %w (response: %s)", err, string(respData))
+	}
+
+	// Check for API error
+	if response.Error.Message != "" {
+		return "", fmt.Errorf("custom API error: %s", response.Error.Message)
+	}
+
+	// Check if we have choices
+	if len(response.Choices) == 0 {
+		return "", fmt.Errorf("no response choices from custom API")
+	}
+
+	content := strings.TrimSpace(response.Choices[0].Message.Content)
 
 	// For conventional commits, validate the response starts with a valid type
 	if cfg.Commit.Convention == config.ConventionalCommits {

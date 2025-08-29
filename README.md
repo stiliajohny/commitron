@@ -35,8 +35,9 @@
   - [Features](#features)
   - [Example output](#example-output)
   - [Installation](#installation)
-    - [Using Homebrew (macOS)](#using-homebrew-macos)
-    - [Manual Installation](#manual-installation)
+  - [Using Homebrew (macOS)](#using-homebrew-macos)
+  - [Manual Installation](#manual-installation)
+  - [Docker Setup](#docker-setup)
   - [Usage](#usage)
   - [Configuration](#configuration)
   - [API Keys](#api-keys)
@@ -71,6 +72,7 @@ Commitron is a CLI tool that generates AI-powered commit messages based on your 
   - Google Gemini
   - Ollama (local inference)
   - Anthropic Claude
+  - Custom web APIs (Open WebUI, local GPT instances, etc.)
 - 📝 Supports various commit message conventions:
   - No convention (plain text)
   - [Conventional Commits](https://www.conventionalcommits.org/)
@@ -121,6 +123,35 @@ cd commitron
 # Build and install
 go install ./cmd/commitron
 ```
+
+### Docker Setup
+
+For a complete local AI environment with Ollama and Open WebUI:
+
+```bash
+# Quick setup (recommended)
+make docker-setup
+
+# Pull a model
+make docker-pull-model MODEL=mistral:latest
+
+# Configure commitron to use Open WebUI
+# Edit ~/.commitronrc and set:
+# provider: custom
+# api_endpoint: http://localhost:3000/v1/chat/completions
+```
+
+**Available Docker commands:**
+- `make docker-setup` - Complete setup (env file + start services)
+- `make docker-up` - Start services only
+- `make docker-down` - Stop services
+- `make docker-pull-model MODEL=name` - Pull a model
+- `make docker-list-models` - List available models
+- `make docker-status` - Show service status
+- `make docker-logs` - Show all logs
+- `make docker-clean` - Stop and remove all data
+
+See [DOCKER_SETUP.md](DOCKER_SETUP.md) for detailed instructions.
 
 ## Usage
 
@@ -191,6 +222,42 @@ To use Commitron, you'll need API keys for your chosen AI provider:
 - Anthropic Claude: <https://console.anthropic.com/keys>
 
 For Ollama, you need to have it running locally. See [Ollama documentation](https://github.com/ollama/ollama) for more information.
+
+For custom web APIs (like Open WebUI), you need to configure the `api_endpoint` URL in your configuration. The custom provider expects an OpenAI-compatible API endpoint that accepts chat completions requests.
+
+For a complete local setup with Ollama and Open WebUI, see [DOCKER_SETUP.md](DOCKER_SETUP.md) for detailed instructions.
+
+### Custom Provider Configuration
+
+The custom provider allows you to use any OpenAI-compatible API endpoint, such as:
+
+- **Open WebUI**: A web interface for Ollama models
+- **Local API servers**: Your own GPT API implementations
+- **Third-party API services**: Any service with OpenAI-compatible endpoints
+
+#### Example Configuration for Open WebUI
+
+```yaml
+ai:
+  provider: custom
+  api_endpoint: http://localhost:8080/v1/chat/completions
+  model: mistral:latest  # The model name as configured in Open WebUI
+  api_key: ""  # Usually not required for local instances
+  temperature: 0.7
+```
+
+#### Example Configuration for Local API Server
+
+```yaml
+ai:
+  provider: custom
+  api_endpoint: http://localhost:8000/v1/chat/completions
+  model: gpt-3.5-turbo
+  api_key: your-api-key-if-required
+  temperature: 0.7
+```
+
+The custom provider expects the API endpoint to accept POST requests with a JSON payload in the OpenAI chat completions format and return responses in the same format.
 
 ## License
 
